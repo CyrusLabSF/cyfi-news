@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<style>
+
+/* GLOBAL */
+
+body{
+margin:0;
+background:#000;
+color:white;
+font-family:Arial;
+overflow-x:hidden;
+}
+
+/* CYFI BACKGROUND */
+
+#cyfi-bg{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+z-index:-1;
+
+background:
+radial-gradient(circle at center,
+rgba(0,200,255,.15) 0%,
+rgba(0,0,0,.95) 70%);
+
+animation:pulse 10s infinite;
+}
+
+@keyframes pulse{
+0%{opacity:.6}
+50%{opacity:1}
+100%{opacity:.6}
+}
+
+/* TICKER */
+
+#ticker{
+background:#070707;
+padding:12px;
+border-bottom:1px solid #222;
+overflow:hidden;
+white-space:nowrap;
+}
+
+#ticker span{
+display:inline-block;
+white-space:nowrap;
+will-change:transform;
+}
+
+/* HERO */
+
+#hero{
+height:460px;
+background-size:cover;
+background-position:center;
+display:flex;
+align-items:flex-end;
+padding:40px;
+position:relative;
+overflow:hidden;
+}
+
+#hero{
+    transition: background-image 0.6s ease-in-out;
+}
+
+#hero-title{
+    transition: opacity 0.4s ease;
+}
+
+#hero{
+animation:heroZoom 12s ease-in-out infinite alternate;
+}
+
+@keyframes heroZoom{
+from{background-size:100%;}
+to{background-size:108%;}
+}
+
+#hero::before{
+content:"";
+position:absolute;
+inset:0;
+background:rgba(0,0,0,.18);
+backdrop-filter:blur(1px);
+}
+
+#hero h1{
+position:relative;
+z-index:2;
+font-size:56px;
+line-height:1.05;
+max-width:760px;
+text-shadow:0 0 18px rgba(0,0,0,.55);
+}
+
+.ticker-item{
+margin-right:60px;
+display:inline-block;
+font-size:14px;
+letter-spacing:.5px;
+opacity:.9;
+transition:opacity .2s ease;
+}
+
+.ticker-item:hover{
+opacity:1;
+color:#0ff;
+}
+
+/* SECTIONS */
+
+.section{
+padding:40px;
+}
+
+.section h2{
+margin-bottom:20px;
+font-size:36px;
+color:#fff;
+}
+
+/* CARD ROW */
+
+.card-row{
+display:flex;
+gap:20px;
+overflow-x:auto;
+scroll-behavior:smooth;
+padding-bottom:10px;
+}
+
+/* scrollbar (chrome/edge) */
+.card-row::-webkit-scrollbar{
+height:6px;
+}
+
+.card-row::-webkit-scrollbar-thumb{
+background:rgba(0,255,255,.25);
+border-radius:10px;
+}
+
+.card-body{
+padding:14px;
+}
+
+.card-title{
+font-size:15px;
+line-height:1.4;
+font-weight:500;
+}
+
+.card img{
+transition:transform .4s ease;
+}
+
+.card:hover img{
+transform:scale(1.06);
+}
+
+/* CARD */
+
+.card{
+opacity:0;
+transform:translateY(20px);
+animation:fadeUp .6s ease forwards;
+min-width:280px;
+background:linear-gradient(180deg,#131313,#0b0b0b);
+border-radius:12px;
+cursor:pointer;
+transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+overflow:hidden;
+border:1px solid rgba(0,255,255,.12);
+box-shadow:0 0 0 rgba(0,255,255,0);
+}
+
+@keyframes fadeUp{
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+.card:hover{
+transform:translateY(-4px) scale(1.02);
+box-shadow:0 0 22px rgba(0,255,255,.18);
+border-color:rgba(0,255,255,.32);
+}
+
+.card img{
+width:100%;
+height:170px;
+object-fit:cover;
+display:block;
+}
+
+.section h2{
+margin-bottom:20px;
+font-size:36px;
+color:#fff;
+text-shadow:0 0 12px rgba(0,255,255,.14);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div style="
+z-index:20;
+position:fixed;
+top:10px;
+right:20px;
+color:#0ff;
+font-size:12px;
+letter-spacing:2px;
+">
+● LIVE
+</div>
+
+<div id="cyfi-bg"></div>
+
+<!-- BREAKING NEWS -->
+
+<div id="ticker">
+<span id="breaking">Loading headlines...</span>
+</div>
+
+<!-- HERO -->
+
+<div id="hero">
+<h1 id="hero-title">Breaking news</h1>
+</div>
+
+<!-- SECTIONS -->
+
+<div class="section">
+<h2>World</h2>
+<div class="card-row" id="world"></div>
+</div>
+
+<div class="section">
+<h2>United States</h2>
+<div class="card-row" id="us"></div>
+</div>
+
+<div class="section">
+<h2>Business</h2>
+<div class="card-row" id="business"></div>
+</div>
+
+<div class="section">
+<h2>Science</h2>
+<div class="card-row" id="science"></div>
+</div>
+
+<div class="section">
+<h2>Culture</h2>
+<div class="card-row" id="culture"></div>
+</div>
+
+<script>
+
+function cleanText(text){
+    if(!text) return "";
+
+    return text
+        // fix encoding issues
+        .replace(/â€™/g, "'")
+        .replace(/â€œ/g, '"')
+        .replace(/â€/g, '"')
+        .replace(/â€“/g, "-")
+        .replace(/â€”/g, "-")
+
+        // decode HTML
+        .replace(/&amp;/g, "&")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+
+        // normalize spacing (KEEP spaces)
+        .replace(/\s+/g, " ")
+
+        .trim();
+}
+
+/* BUILD CARD */
+
+function buildCard(article){
+
+const card = document.createElement("div");
+card.className = "card";
+card.onclick = () => window.open(article.link, "_blank");
+
+const img = document.createElement("img");
+
+if(article.image && article.image.includes("http") && !article.image.includes("npr.org/templates")){
+    img.src = article.image;
+} else {
+    img.src = "https://source.unsplash.com/600x400/?news," + encodeURIComponent(article.title);
+}
+
+img.onerror = () => {
+    img.src = "https://picsum.photos/400/200?fallback=" + Math.random();
+};
+
+img.style.opacity = 0;
+
+img.onload = () => {
+    img.style.transition = "opacity .4s ease";
+    img.style.opacity = 1;
+};
+
+const body = document.createElement("div");
+body.className = "card-body";
+
+const title = document.createElement("div");
+title.className = "card-title";
+
+title.innerText = cleanText(article.title) || "Untitled";
+
+body.appendChild(title);
+
+card.appendChild(img);
+card.appendChild(body);
+
+return card;
+}
+
+/* LOAD SECTION */
+
+async function loadSection(category, target){
+
+const container = document.getElementById(target);
+container.innerHTML = "<div style='opacity:.5'>Loading...</div>";
+
+try{
+    const res = await fetch("http://127.0.0.1:8000/api/news?category=" + category);
+    const data = await res.json();
+
+    container.innerHTML = "";
+
+    if (!data.items || data.items.length === 0){
+        container.innerHTML = "No articles found.";
+        return;
+    }
+
+    data.items.slice(0,10).forEach((article, i)=>{
+    const card = buildCard(article);
+    card.style.animationDelay = (i * 0.05) + "s";
+    container.appendChild(card);
+});
+
+}catch(err){
+    console.error("ERROR:", err);
+}
+}
+
+/* LOAD ALL */
+
+function loadNews(){
+
+    loadSection("world","world");
+    loadSection("us","us");
+    loadSection("business","business");
+    loadSection("science","science");
+    loadSection("culture","culture");
+
+}
+
+let heroInterval;
+
+async function loadHero(){
+
+try{
+    const res = await fetch("http://127.0.0.1:8000/api/news?category=world");
+    const data = await res.json();
+
+    if (!data.items || data.items.length === 0) return;
+
+    heroArticles = data.items.slice(0,5);
+
+    rotateHero();
+
+    if(heroInterval) clearInterval(heroInterval);
+    heroInterval = setInterval(rotateHero,9000);
+
+}catch(e){
+    console.error("Hero load failed", e);
+}
+}
+
+/* HERO ROTATION */
+
+let heroIndex=0
+let heroArticles=[]
+
+function rotateHero(){
+
+    if(!heroArticles.length) return;
+
+    const hero = heroArticles[heroIndex];
+
+    const rawTitle =
+        hero.title ||
+        hero.headline ||
+        hero.name ||
+        hero.description ||
+        "";
+
+    const cleanTitle = cleanText(rawTitle);
+
+    // 👇 THIS is where the new code goes
+    const titleEl = document.getElementById("hero-title");
+
+    titleEl.style.opacity = 0;
+
+    setTimeout(() => {
+        titleEl.innerText = cleanTitle || "No headline available";
+        titleEl.style.opacity = 1;
+    }, 200);
+
+    const heroImg = (hero.image && hero.image.startsWith("http"))
+        ? hero.image
+        : "https://source.unsplash.com/1200x600/?news";
+
+    document.getElementById("hero").style.backgroundImage = `url(${heroImg})`;
+
+    document.getElementById("hero").onclick = () => {
+        if(hero.link) window.open(hero.link, "_blank");
+    };
+
+    heroIndex = (heroIndex + 1) % heroArticles.length;
+}
+
+let tickerX = 0;
+let tickerRaf;
+
+function renderTicker(items){
+
+    cancelAnimationFrame(tickerRaf);
+
+    const track = document.getElementById("breaking");
+
+    if(!items || !items.length){
+        track.innerHTML = `<span style="opacity:.5">No headlines available.</span>`;
+        return;
+    }
+
+    const html = items.slice(0, 20).map(a => `
+        <span class="ticker-item">
+            ${cleanText(a.title)}
+        </span>
+    `).join("");
+
+    track.innerHTML = html + html;
+
+    tickerX = 0;
+
+    function step(){
+
+        tickerX -= 0.35; // smoother speed
+
+        const half = track.scrollWidth / 2;
+
+        if(Math.abs(tickerX) >= half){
+            tickerX = 0;
+        }
+
+        track.style.transform = `translateX(${tickerX}px)`;
+
+        tickerRaf = requestAnimationFrame(step);
+    }
+
+    step();
+}
+
+/* TICKER */
+
+async function loadTicker(){
+
+    const res = await fetch("http://127.0.0.1:8000/api/news?category=world");
+    const data = await res.json();
+
+    renderTicker(data.items);
+}
+
+/* START */
+
+loadNews()
+loadHero()
+loadTicker()
+
+</script>
+
+</body>
+
+</html>
