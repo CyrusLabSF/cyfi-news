@@ -5,12 +5,17 @@ import time
 import re
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+app = FastAPI()  
+origins = [
+    "https://www.risktakers.net",
+    "https://risktakers.net"
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,   
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -272,6 +272,8 @@ letter-spacing:2px;
 
 <script>
 
+const API = "https://cyfi-news-api.onrender.com";
+
 function cleanText(text){
     if(!text) return "";
 
@@ -304,14 +306,21 @@ card.onclick = () => window.open(article.link, "_blank");
 
 const img = document.createElement("img");
 
-if(article.image && article.image.includes("http") && !article.image.includes("npr.org/templates")){
+const hasRealImage =
+    article.image &&
+    article.image.startsWith("http") &&
+    !article.image.includes("npr.org/templates") &&
+    !article.image.includes("placeholder") &&
+    !article.image.includes("default");
+
+if(hasRealImage){
     img.src = article.image;
 } else {
-    img.src = "https://source.unsplash.com/600x400/?news," + encodeURIComponent(article.title);
+    img.src = "https://picsum.photos/600/400?grayscale&blur=1";
 }
 
 img.onerror = () => {
-    img.src = "https://picsum.photos/400/200?fallback=" + Math.random();
+    img.src = "https://picsum.photos/600/400?grayscale";
 };
 
 img.style.opacity = 0;
@@ -326,10 +335,19 @@ body.className = "card-body";
 
 const title = document.createElement("div");
 title.className = "card-title";
-
 title.innerText = cleanText(article.title) || "Untitled";
 
+const source = document.createElement("div");
+source.style.fontSize = "11px";
+source.style.opacity = "0.6";
+source.style.marginTop = "6px";
+source.style.letterSpacing = "1px";
+source.style.color = "#0ff";
+
+source.innerText = (article.source_domain || "UNKNOWN").toUpperCase();
+
 body.appendChild(title);
+body.appendChild(source);
 
 card.appendChild(img);
 card.appendChild(body);
@@ -345,7 +363,7 @@ const container = document.getElementById(target);
 container.innerHTML = "<div style='opacity:.5'>Loading...</div>";
 
 try{
-    const res = await fetch("http://127.0.0.1:8000/api/news?category=" + category);
+    const res = await fetch(`${API}/api/news?category=${category}`);
     const data = await res.json();
 
     container.innerHTML = "";
@@ -383,7 +401,7 @@ let heroInterval;
 async function loadHero(){
 
 try{
-    const res = await fetch("http://127.0.0.1:8000/api/news?category=world");
+    const res = await fetch(`${API}/api/news?category=world`);
     const data = await res.json();
 
     if (!data.items || data.items.length === 0) return;
@@ -430,9 +448,13 @@ function rotateHero(){
         titleEl.style.opacity = 1;
     }, 200);
 
-    const heroImg = (hero.image && hero.image.startsWith("http"))
+    const heroImg = (
+        hero.image &&
+        hero.image.startsWith("http") &&
+        !hero.image.includes("placeholder")
+    )
         ? hero.image
-        : "https://source.unsplash.com/1200x600/?news";
+        : "https://picsum.photos/1200/600?grayscale";
 
     document.getElementById("hero").style.backgroundImage = `url(${heroImg})`;
 
@@ -489,7 +511,7 @@ function renderTicker(items){
 
 async function loadTicker(){
 
-    const res = await fetch("http://127.0.0.1:8000/api/news?category=world");
+    const res = await fetch(`${API}/api/news?category=world`);
     const data = await res.json();
 
     renderTicker(data.items);
