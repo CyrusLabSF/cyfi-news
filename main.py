@@ -5,7 +5,6 @@ import time
 import re
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()  
 origins = [
@@ -190,13 +189,34 @@ def score_article(item: dict) -> int:
 
 def normalize_item(raw: dict) -> dict:
     link = raw.get("link", "").strip()
-    thumbnail = (raw.get("thumbnail") or "").strip()
+    domain = get_domain(link)
 
-    image = thumbnail if thumbnail.startswith("http") else ""
+    image = ""
+
+    thumbnail = (raw.get("thumbnail") or "").strip()
+    if thumbnail.startswith("http"):
+        image = thumbnail
+
+    if not image:
+        media_content = raw.get("media_content") or []
+        if isinstance(media_content, list) and media_content:
+            first = media_content[0]
+            if isinstance(first, dict):
+                media_url = (first.get("url") or "").strip()
+                if media_url.startswith("http"):
+                    image = media_url
+
+    if not image:
+        media_thumbnail = raw.get("media_thumbnail") or []
+        if isinstance(media_thumbnail, list) and media_thumbnail:
+            first = media_thumbnail[0]
+            if isinstance(first, dict):
+                media_url = (first.get("url") or "").strip()
+                if media_url.startswith("http"):
+                    image = media_url
+
     if not image and link:
         image = extract_og_image(link)
-
-    domain = get_domain(link)
 
     return {
         "title": clean_text(raw.get("title", "")),
