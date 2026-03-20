@@ -114,25 +114,33 @@ def extract_og_image(article_url: str) -> str:
         return cached
 
     try:
-        resp = SESSION.get(article_url, timeout=8)
+        resp = SESSION.get(article_url, timeout=6)
         resp.raise_for_status()
 
         soup = BeautifulSoup(resp.text, "html.parser")
 
-        selectors = [
-            ("meta", {"property": "og:image"}),
-            ("meta", {"name": "og:image"}),
-            ("meta", {"property": "twitter:image"}),
-            ("meta", {"name": "twitter:image"}),
-        ]
+        # Try multiple image sources
+        candidates = []
 
-        for tag_name, attrs in selectors:
-            tag = soup.find(tag_name, attrs=attrs)
-            if tag and tag.get("content"):
-                img = tag["content"].strip()
-                if img.startswith("http"):
-                    set_cached(image_cache, article_url, img)
-                    return img
+        # OG + Twitter
+        meta_tags = soup.find_all("meta")
+        for tag in meta_tags:
+            prop = tag.get("property") or tag.get("name") or ""
+            if "image" in prop.lower():
+                content = tag.get("content")
+                if content and content.startswith("http"):
+                    candidates.append(content)
+
+        # Article images
+        for img in soup.find_all("img"):
+            src = img.get("src")
+            if src and src.startswith("http") and len(src) > 100:
+                candidates.append(src)
+
+        if candidates:
+            best = candidates[0]
+            set_cached(image_cache, article_url, best)
+            return best
 
     except Exception:
         pass

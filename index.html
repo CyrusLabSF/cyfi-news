@@ -28,17 +28,13 @@ height:100%;
 z-index:-1;
 
 background:
-radial-gradient(circle at center,
-rgba(0,200,255,.15) 0%,
-rgba(0,0,0,.95) 70%);
-
-animation:pulse 10s infinite;
-}
-
-@keyframes pulse{
-0%{opacity:.6}
-50%{opacity:1}
-100%{opacity:.6}
+linear-gradient(
+180deg,
+#000000 0%,
+#020617 40%,
+#02121a 70%,
+#000000 100%
+);
 }
 
 /* TICKER */
@@ -309,9 +305,7 @@ const img = document.createElement("img");
 const hasRealImage =
     article.image &&
     article.image.startsWith("http") &&
-    !article.image.includes("npr.org/templates") &&
-    !article.image.includes("placeholder") &&
-    !article.image.includes("default");
+    article.image.length > 50;
 
 if(hasRealImage){
     img.src = article.image;
